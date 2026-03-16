@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Pedidos de Venda - ERP{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Lista de Pedidos</h5>
+        <a href="{% url 'vendas:criar' %}" class="btn btn-primary btn-sm">+ Novo Pedido</a>
+    </div>
+    
+    <div class="card-body">
+        {% if pedidos %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Pedido #</th>
+                        <th>Cliente</th>
+                        <th>Data</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pedido in pedidos %}
+                    <tr>
+                        <td><a href="{% url 'vendas:detalhe' pedido.numero %}">#{{ pedido.numero }}</a></td>
+                        <td>{{ pedido.cliente.nome }}</td>
+                        <td>{{ pedido.data_pedido|date:'d/m/Y H:i' }}</td>
+                        <td><strong>R$ {{ pedido.total|floatformat:2 }}</strong></td>
+                        <td>
+                            {% if pedido.status == 'RH' %}
+                                <span class="badge bg-secondary">Rascunho</span>
+                            {% elif pedido.status == 'EF' %}
+                                <span class="badge bg-success">Emitido</span>
+                            {% elif pedido.status == 'EN' %}
+                                <span class="badge bg-info">Enviado</span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ pedido.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'vendas:editar' pedido.numero %}" class="btn btn-sm btn-warning">Editar</a>
+                            <a href="{% url 'vendas:deletar' pedido.numero %}" class="btn btn-sm btn-danger">Deletar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Nenhum pedido cadastrado. <a href="{% url 'vendas:criar' %}">Criar primeiro pedido</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

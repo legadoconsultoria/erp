@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Clientes - ERP{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Lista de Clientes</h5>
+        <a href="{% url 'clientes:criar' %}" class="btn btn-primary btn-sm">+ Novo Cliente</a>
+    </div>
+    
+    <div class="card-body">
+        {% if clientes %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Email</th>
+                        <th>Telefone</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td><a href="{% url 'clientes:detalhe' cliente.id %}">{{ cliente.nome }}</a></td>
+                        <td>{{ cliente.get_tipo_display }}</td>
+                        <td>{{ cliente.cpf_cnpj }}</td>
+                        <td>{{ cliente.email }}</td>
+                        <td>{{ cliente.telefone }}</td>
+                        <td>
+                            {% if cliente.status == 'AT' %}
+                                <span class="badge bg-success">Ativo</span>
+                            {% elif cliente.status == 'IN' %}
+                                <span class="badge bg-warning">Inativo</span>
+                            {% else %}
+                                <span class="badge bg-danger">Suspenso</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'clientes:editar' cliente.id %}" class="btn btn-sm btn-warning">Editar</a>
+                            <a href="{% url 'clientes:deletar' cliente.id %}" class="btn btn-sm btn-danger">Deletar</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if is_paginated %}
+        <nav class="mt-4">
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">Primeira</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                {% endif %}
+                
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Próxima</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info">
+            Nenhum cliente cadastrado. <a href="{% url 'clientes:criar' %}">Criar primeiro cliente</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

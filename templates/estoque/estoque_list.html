@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Estoque - ERP{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Produtos em Estoque</h5>
+        <a href="{% url 'estoque:movimentacoes' %}" class="btn btn-info btn-sm">Ver Movimentações</a>
+    </div>
+    
+    <div class="card-body">
+        {% if produtos %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Produto</th>
+                        <th>SKU</th>
+                        <th>Quantidade</th>
+                        <th>Mínimo</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos %}
+                    <tr>
+                        <td>{{ produto.nome }}</td>
+                        <td><code>{{ produto.sku }}</code></td>
+                        <td>
+                            {% if produto.quantidade_estoque < produto.quantidade_minima %}
+                                <span class="badge bg-danger">{{ produto.quantidade_estoque }}</span>
+                            {% else %}
+                                <span class="badge bg-success">{{ produto.quantidade_estoque }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ produto.quantidade_minima }}</td>
+                        <td>
+                            {% if produto.quantidade_estoque == 0 %}
+                                <span class="badge bg-danger">Fora de Estoque</span>
+                            {% elif produto.quantidade_estoque < produto.quantidade_minima %}
+                                <span class="badge bg-warning">Abaixo do Mínimo</span>
+                            {% else %}
+                                <span class="badge bg-success">Normal</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Nenhum produto com estoque. <a href="{% url 'produtos:criar' %}">Criar primeiro produto</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
