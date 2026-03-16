@@ -11,10 +11,12 @@
         }
         .navbar {
             background-color: #2c3e50;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .navbar-brand {
             font-weight: bold;
             color: #fff !important;
+            font-size: 1.5rem;
         }
         .sidebar {
             background-color: #34495e;
@@ -27,6 +29,7 @@
             display: block;
             padding: 10px 15px;
             border-left: 3px solid transparent;
+            transition: all 0.3s ease;
         }
         .sidebar a:hover {
             background-color: #2c3e50;
@@ -38,21 +41,39 @@
         .card {
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+        .navbar-text {
+            color: #ecf0f1 !important;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/">📊 ERP Sistema</a>
+            <a class="navbar-brand" href="{% url 'home' %}">📊 ERP Sistema</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/admin/">Admin</a>
-                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="navbar-text">👤 {{ user.first_name|default:user.username }}</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'modulos' %}">Módulos</a>
+                        </li>
+                        <li class="nav-item">
+                            <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-link btn btn-link">Sair</button>
+                            </form>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -60,6 +81,7 @@
 
     <div class="container-fluid">
         <div class="row">
+            {% if user.is_authenticated %}
             <div class="col-md-2 sidebar d-none d-md-block">
                 <div class="pt-3 pb-2">
                     <h6 class="px-3 text-uppercase text-muted">Módulos</h6>
@@ -72,6 +94,9 @@
             </div>
 
             <div class="col-md-10 main-content">
+            {% else %}
+            <div class="col-12 main-content">
+            {% endif %}
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
