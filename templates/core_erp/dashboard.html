@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ERP{% endblock %}
+
+{% block content %}
+<style>
+    .stats-card {
+        border-left: 4px solid;
+        transition: transform 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .stats-card.primary {
+        border-left-color: #0d6efd;
+    }
+    .stats-card.success {
+        border-left-color: #198754;
+    }
+    .stats-card.danger {
+        border-left-color: #dc3545;
+    }
+    .stats-card.warning {
+        border-left-color: #ffc107;
+    }
+    .stats-card.info {
+        border-left-color: #0dcaf0;
+    }
+    .stats-card.cyan {
+        border-left-color: #0e7490;
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #333;
+    }
+    .stats-label {
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 2rem;
+    }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="mb-4">📊 Dashboard do Sistema</h2>
+        <p class="text-muted">Bem-vindo, <strong>{{ usuario.first_name|default:usuario.username }}</strong>! Aqui você pode visualizar as principais estatísticas do sistema.</p>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas Gerais -->
+<div class="row mb-4">
+    <!-- Clientes -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card primary">
+            <div class="card-body">
+                <div class="stats-number">{{ stats.clientes.total }}</div>
+                <div class="stats-label">Total de Clientes</div>
+                <small class="text-muted">
+                    {{ stats.clientes.ativos }} ativo(s)
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produtos -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card success">
+            <div class="card-body">
+                <div class="stats-number">{{ stats.produtos.total }}</div>
+                <div class="stats-label">Total de Produtos</div>
+                <small class="text-muted">
+                    {{ stats.produtos.ativos }} ativo(s)
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendas -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card danger">
+            <div class="card-body">
+                <div class="stats-number">{{ stats.vendas.total }}</div>
+                <div class="stats-label">Total de Pedidos</div>
+                <small class="text-muted">
+                    {{ stats.vendas.pendentes }} pendentes
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compras -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card warning">
+            <div class="card-body">
+                <div class="stats-number">{{ stats.compras.fornecedores }}</div>
+                <div class="stats-label">Total de Fornecedores</div>
+                <small class="text-muted">
+                    {{ stats.compras.ordens }} ordens
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <!-- Estoque -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card info">
+            <div class="card-body">
+                <div class="stats-number">{{ stats.estoque.movimentacoes }}</div>
+                <div class="stats-label">Movimentações</div>
+                <small class="text-muted">
+                    {{ stats.estoque.entradas }} entradas
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Almoxarifado -->
+    <div class="col-md-3 mb-3">
+        <div class="card stats-card cyan">
+            <div class="card-body">
+                <div class="stats-number">{{ stats.almoxerifado.insumos }}</div>
+                <div class="stats-label">Total de Insumos</div>
+                <small class="text-muted">
+                    {{ stats.almoxerifado.requisicoes }} requisições
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Valor Total de Vendas -->
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="stats-label mb-2">Valor Total de Vendas</div>
+                <div style="font-size: 2.5rem; font-weight: bold; color: #198754;">
+                    R$ {{ stats.vendas.valor_total|floatformat:2 }}
+                </div>
+                <small class="text-muted">
+                    {{ stats.vendas.concluidas }} pedidos concluídos
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row">
+    <!-- Gráfico de Vendas por Dia -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Vendas (Últimos 30 Dias)</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chartVendas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Movimentações de Estoque -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Movimentações de Estoque</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chartMovimentacoes"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Gráfico de Status de Pedidos -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Status dos Pedidos</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chartStatusPedidos"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Produtos por Categoria -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Produtos por Categoria</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chartProdutosCategoria"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Atalhos para Módulos -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h5 class="mb-3">Acesso Rápido aos Módulos</h5>
+    </div>
+    <div class="col-md-2 mb-2">
+        <a href="{% url 'clientes:lista' %}" class="btn btn-outline-primary w-100">👥 Clientes</a>
+    </div>
+    <div class="col-md-2 mb-2">
+        <a href="{% url 'produtos:lista' %}" class="btn btn-outline-success w-100">📦 Produtos</a>
+    </div>
+    <div class="col-md-2 mb-2">
+        <a href="{% url 'vendas:lista' %}" class="btn btn-outline-danger w-100">💰 Vendas</a>
+    </div>
+    <div class="col-md-2 mb-2">
+        <a href="{% url 'compras:lista_fornecedores' %}" class="btn btn-outline-warning w-100">🛒 Compras</a>
+    </div>
+    <div class="col-md-2 mb-2">
+        <a href="{% url 'estoque:lista' %}" class="btn btn-outline-info w-100">📊 Estoque</a>
+    </div>
+    <div class="col-md-2 mb-2">
+        <a href="{% url 'almoxerifado:lista_insumos' %}" class="btn btn-outline-secondary w-100">📋 Almoxarifado</a>
+    </div>
+</div>
+
+<!-- Script do Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<script>
+    // Cores para os gráficos
+    const colors = {
+        primary: '#0d6efd',
+        success: '#198754',
+        danger: '#dc3545',
+        warning: '#ffc107',
+        info: '#0dcaf0',
+    };
+
+    // Inicializa gráficos vazios; dados serão carregados via API
+    const ctxVendas = document.getElementById('chartVendas').getContext('2d');
+    const chartVendas = new Chart(ctxVendas, {
+        type: 'line',
+        data: { labels: [], datasets: [{ label: 'Faturamento (R$)', data: [], borderColor: colors.success, backgroundColor: 'rgba(25, 135, 84, 0.08)', tension: 0.4, fill: true }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v } } } }
+    });
+
+    const ctxMovimentacoes = document.getElementById('chartMovimentacoes').getContext('2d');
+    const chartMovimentacoes = new Chart(ctxMovimentacoes, {
+        type: 'doughnut',
+        data: { labels: ['Entradas', 'Saídas'], datasets: [{ data: [0,0], backgroundColor: [colors.success, colors.danger], borderColor: ['#fff','#fff'], borderWidth: 2 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    const ctxStatusPedidos = document.getElementById('chartStatusPedidos').getContext('2d');
+    const chartStatusPedidos = new Chart(ctxStatusPedidos, {
+        type: 'bar',
+        data: { labels: ['Pendentes','Concluídas'], datasets: [{ label: 'Quantidade', data: [0,0], backgroundColor: [colors.warning, colors.success], borderColor: [colors.warning, colors.success], borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    const ctxProdutosCategoria = document.getElementById('chartProdutosCategoria').getContext('2d');
+    const chartProdutosCategoria = new Chart(ctxProdutosCategoria, {
+        type: 'bar',
+        data: { labels: [], datasets: [{ label: 'Quantidade', data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    // Carrega dados da API e atualiza os gráficos
+    fetch('{% url "dashboard_api" %}')
+        .then(r => r.ok ? r.json() : Promise.reject(r))
+        .then(data => {
+            // Vendas últimos 30 dias
+            const vendas = data.vendas_30dias || [];
+            const labels = vendas.map(x => x.data_pedido__date || x.date || x.day || '');
+            const totals = vendas.map(x => parseFloat(x.total) || 0);
+            chartVendas.data.labels = labels;
+            chartVendas.data.datasets[0].data = totals;
+            chartVendas.update();
+
+            // Movimentações estoque
+            const mov = data.movimentacoes_estoque || {entradas:0, saidas:0};
+            chartMovimentacoes.data.datasets[0].data = [mov.entradas || 0, mov.saidas || 0];
+            chartMovimentacoes.update();
+
+            // Status pedidos
+            const pend = (data.vendas && data.vendas.pendentes) || 0;
+            const concl = (data.vendas && data.vendas.concluidas) || 0;
+            chartStatusPedidos.data.datasets[0].data = [pend, concl];
+            chartStatusPedidos.update();
+
+            // Produtos por categoria
+            const categorias = data.produtos_categoria || [];
+            const catLabels = categorias.map(c => c.categoria__nome || c.categoria || c["categoria__nome"] || '');
+            const catCounts = categorias.map(c => parseInt(c.count) || parseInt(c.total) || 0);
+            chartProdutosCategoria.data.labels = catLabels;
+            chartProdutosCategoria.data.datasets[0].data = catCounts;
+            // cores simples
+            const palette = [colors.primary, colors.info, colors.warning, colors.success, colors.danger];
+            chartProdutosCategoria.data.datasets[0].backgroundColor = catLabels.map((_,i)=>palette[i%palette.length]);
+            chartProdutosCategoria.data.datasets[0].borderColor = chartProdutosCategoria.data.datasets[0].backgroundColor;
+            chartProdutosCategoria.update();
+        })
+        .catch(err => console.error('Erro ao carregar dados do dashboard:', err));
+</script>
+{% endblock %}

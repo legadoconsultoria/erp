@@ -3,7 +3,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
+from django.http import JsonResponse
 from .forms import LoginForm
+from clientes.models import Cliente
+from produtos.models import Produto
+from vendas.models import Pedido
+from compras.models import Fornecedor, OrdenCompra
+from estoque.models import MovimentacaoEstoque
+from almoxerifado.models import Insumo, RequisicaoMaterial
 
 @require_http_methods(["GET", "POST"])
 def login_view(request):
@@ -31,6 +38,7 @@ def login_view(request):
                     'vendas': 'vendas:lista',
                     'compras': 'compras:lista_fornecedores',
                     'estoque': 'estoque:lista',
+                    'almoxerifado': 'almoxerifado:lista_insumos',
                     'admin': '/admin/',
                 }
                 
@@ -83,6 +91,13 @@ def modulos_view(request):
             'cor': 'info'
         },
         {
+            'nome': 'Almoxarifado',
+            'descricao': 'Gestão de insumos e requisições',
+            'icon': '📋',
+            'url': 'almoxerifado:lista_insumos',
+            'cor': 'cyan'
+        },
+        {
             'nome': 'Admin',
             'descricao': 'Painel administrativo do sistema',
             'icon': '⚙️',
@@ -103,3 +118,77 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Você foi desconectado com sucesso.')
     return redirect('login')
+
+@login_required(login_url='login')
+def dashboard_view(request):
+    """Dashboard com estatísticas gerais do sistema"""
+    
+    # Estatísticas por módulo
+    stats = {
+        'clientes': {
+            'total': Cliente.objects.count(),
+            'ativos': Cliente.objects.filter(status='ativo').count(),
+            'inativos': Cliente.objects.filter(status='inativo').count(),
+        },
+        'produtos': {
+            'total': Produto.objects.count(),
+            'ativos': Produto.objects.filter(status='ativo').count(),
+            'baixo_estoque': Produto.objects.filter(quantidade_estoque__lt=Produto.objects.values_list('quantidade_minima', flat=True)[0] if Produto.objects.exists() else 0).count(),
+        },
+        'vendas': {
+            'total': Pedido.objects.count(),
+            'pendentes': Pedido.objects.filter(status='PE').count(),
+            'concluidas': Pedido.objects.filter(status='CO').count(),
+            'valor_total': sum(p.total for p in Pedido.objects.all()),
+        },
+        'compras': {
+            'fornecedores': Fornecedor.objects.count(),
+            'ordens': OrdenCompra.objects.count(),
+            'pendentes': OrdenCompra.objects.filter(status='PE').count(),
+        },
+        'estoque': {
+            'movimentacoes': MovimentacaoEstoque.objects.count(),
+            'entradas': MovimentacaoEstoque.objects.filter(tipo='EN').count(),
+            'saidas': MovimentacaoEstoque.objects.filter(tipo='SA').count(),
+        },
+        'almoxerifado': {
+            'insumos': Insumo.objects.count(),
+            'requisicoes': RequisicaoMaterial.objects.count(),
+            'pendentes': RequisicaoMaterial.objects.filter(status='PE').count(),
+        },
+    }
+    
+    contexto = {
+        'stats': stats,
+        'usuario': request.user
+    }
+    
+    return render(request, 'core_erp/dashboard.html', contexto)
+
+@login_required(login_url='login')
+def dashboard_api(request):
+    """API que retorna dados para os gráficos do dashboard"""
+    from django.db.models import Sum, Count
+    from datetime import datetime, timedelta
+    
+    # Vendas dos últimos 30 dias
+    data_inicio = datetime.now() - timedelta(days=30)
+    vendas_30dias = Pedido.objects.filter(data_pedido__gte=data_inicio).values('data_pedido__date').annotate(total=Sum('total')).order_by('data_pedido__date')
+    
+    # Movimentações de estoque
+    entradas = MovimentacaoEstoque.objects.filter(tipo='EN').count()
+    saidas = MovimentacaoEstoque.objects.filter(tipo='SA').count()
+    
+    # Produtos por categoria
+    produtos_categoria = Produto.objects.values('categoria__nome').annotate(count=Count('id')).order_by('-count')[:5]
+    
+    dados = {
+        'vendas_30dias': list(vendas_30dias),
+        'movimentacoes_estoque': {
+            'entradas': entradas,
+            'saidas': saidas,
+        },
+        'produtos_categoria': list(produtos_categoria),
+    }
+    
+    return JsonResponse(dados)

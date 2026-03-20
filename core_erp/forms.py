@@ -7,6 +7,7 @@ MODULOS_CHOICES = [
     ('vendas', '💰 Vendas'),
     ('compras', '🛒 Compras'),
     ('estoque', '📊 Estoque'),
+    ('almoxerifado', '📋 Almoxarifado'),
     ('admin', '⚙️ Admin'),
 ]
 

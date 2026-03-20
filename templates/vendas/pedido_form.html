@@ -1,12 +1,11 @@
 {% extends 'base.html' %}
-{% load form_tags %}
 
-{% block title %}{% if form.instance.id %}Editar{% else %}Novo{% endif %} Cliente - ERP{% endblock %}
+{% block title %}{% if form.instance.id %}Editar{% else %}Novo{% endif %} Pedido - ERP{% endblock %}
 
 {% block content %}
 <div class="card">
     <div class="card-header">
-        <h5>{% if form.instance.id %}Editar Cliente{% else %}Novo Cliente{% endif %}</h5>
+        <h5>{% if form.instance.id %}Editar Pedido{% else %}Novo Pedido{% endif %}</h5>
     </div>
     
     <div class="card-body">
@@ -30,7 +29,7 @@
                                 {% endfor %}
                             </select>
                         {% else %}
-                            {{ field|add_class:"form-control" }}
+                            <input type="{{ field.field.widget.input_type }}" class="form-control {% if field.errors %}is-invalid{% endif %}" name="{{ field.name }}" {% if field.value %}value="{{ field.value }}"{% endif %} placeholder="{{ field.label }}" {% if field.field.required %}required{% endif %}>
                         {% endif %}
                         
                         {% if field.errors %}
@@ -47,15 +46,9 @@
             
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary">Salvar</button>
-                <a href="{% url 'clientes:lista' %}" class="btn btn-secondary">Cancelar</a>
+                <a href="{% url 'vendas:lista' %}" class="btn btn-secondary">Cancelar</a>
             </div>
         </form>
     </div>
 </div>
-
-<style>
-    .form-control, .form-select {
-        border-radius: 0.25rem;
-    }
-</style>
 {% endblock %}

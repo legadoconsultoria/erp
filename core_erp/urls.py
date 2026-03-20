@@ -19,10 +19,12 @@ from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('', views.modulos_view, name='home'),
+    path('', views.dashboard_view, name='home'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('modulos/', views.modulos_view, name='modulos'),
+    path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('api/dashboard/', views.dashboard_api, name='dashboard_api'),
     path('admin/', admin.site.urls),
     
     # ERP URLs
@@ -31,4 +33,5 @@ urlpatterns = [
     path('vendas/', include('vendas.urls')),
     path('compras/', include('compras.urls')),
     path('estoque/', include('estoque.urls')),
+    path('almoxerifado/', include('almoxerifado.urls')),
 ]

@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+echo "🔧 Aguardando conexão com banco de dados..."
+python manage.py wait_for_db 2>/dev/null || true
+
+echo "📦 Executando migrações de banco de dados..."
+python manage.py migrate --noinput
+
+echo "🎨 Coletando arquivos estáticos..."
+python manage.py collectstatic --noinput --clear 2>/dev/null || true
+
+echo "🚀 Iniciando servidor..."
+exec "$@"

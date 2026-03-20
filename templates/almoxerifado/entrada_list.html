@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Entradas - Almoxarifado{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>📤 Entradas de Material</h5>
+        <a href="{% url 'almoxerifado:criar_entrada' %}" class="btn btn-primary btn-sm">+ Nova Entrada</a>
+    </div>
+    
+    <div class="card-body">
+        {% if entradas %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Núm.</th>
+                        <th>Insumo</th>
+                        <th>Quantidade</th>
+                        <th>Preço Unit.</th>
+                        <th>Custo Total</th>
+                        <th>Fornecedor</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrada in entradas %}
+                    <tr>
+                        <td>#{{ entrada.numero }}</td>
+                        <td>{{ entrada.insumo.nome }}</td>
+                        <td>{{ entrada.quantidade }} {{ entrada.insumo.get_unidade_display }}</td>
+                        <td>R$ {{ entrada.preco_unitario|floatformat:2 }}</td>
+                        <td><strong>R$ {{ entrada.custo_total|floatformat:2 }}</strong></td>
+                        <td>{{ entrada.fornecedor|default:"-" }}</td>
+                        <td>{{ entrada.data_entrada|date:'d/m/Y H:i' }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" data-bs-toggle="tooltip" title="Ver Detalhes">ℹ️</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Nenhuma entrada registrada.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
